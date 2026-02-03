@@ -1,14 +1,23 @@
 services:
   api:
     build: .
-    container_name: ai-mcp-agent
     ports:
       - "8000:8000"
     environment:
-      LOG_LEVEL: "INFO"
-      # Use the same DB for products and orders (shared persistence)
-      PRODUCTS_DB_PATH: "/app/data/products.db"
-      ORDERS_DB_PATH: "/app/data/products.db"
-      PYTHONPATH: "/app:/app/src"
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
     volumes:
       - ./data:/app/data
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    # порт наружу не обязателен, но удобно для локальной отладки
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:

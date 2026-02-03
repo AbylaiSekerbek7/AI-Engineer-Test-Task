@@ -1,4 +1,4 @@
-# AI MCP Agent (AI Engineer Test Task)
+# AI MCP Agent (AI Engineer Test Task) 🤖
 
 AI-агент с MCP интеграцией:
 - MCP сервер продуктов (stdio, FastMCP) с tools: list/get/add/statistics
@@ -11,7 +11,7 @@ AI-агент с MCP интеграцией:
 
 ---
 
-## Архитектура
+## Архитектура 🏗
 
 FastAPI → LangGraph Agent → (Custom tools + MCP tools via stdio subprocess)
 
@@ -22,7 +22,7 @@ FastAPI → LangGraph Agent → (Custom tools + MCP tools via stdio subprocess)
 
 ---
 
-## Возможности (примеры запросов)
+## Возможности (примеры запросов) 🧨
 
 Можно писать на русском / английском / mixed (устойчиво к опечаткам и сокращениям).
 
@@ -44,7 +44,7 @@ FastAPI → LangGraph Agent → (Custom tools + MCP tools via stdio subprocess)
 
 ---
 
-## Запуск локально (Windows PowerShell)
+## Запуск локально (Windows PowerShell) 🔥
 
 ### 1) Установить зависимости
 ``` powershell
@@ -102,6 +102,12 @@ SQLite база хранится в ./data/products.db (volume ./data:/app/data)
 .\.venv\Scripts\activate
 pytest -q
 ```
+
+---
+
+### DEMO
+
+
 
 ---
 

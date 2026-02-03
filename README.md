@@ -130,7 +130,7 @@ pytest -q
 ![Local persistence](screenshots/Local_persist2.png)
 
 ### 8) Docker persistence
-![Docker persistence](screenshots/Docker_1.png)
+![Docker persistence](/docs/screenshots/Docker_1.jpg)
 ![Docker persistence](screenshots/Docker_2.png)
 ![Docker persistence](screenshots/Docker_3.png)
 

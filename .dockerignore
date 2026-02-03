@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.vscode/
+.idea/
+*.log
+
+# local data (will be mounted via volume anyway)
+data/*.db
+data/*.sqlite3

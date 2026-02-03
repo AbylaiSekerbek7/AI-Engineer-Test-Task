@@ -7,6 +7,7 @@ AI-агент с MCP интеграцией:
 - FastAPI endpoint: `POST /api/v1/agent/query`
 - Dockerfile + docker-compose
 - SQLite persistence (bonus) + Orders MCP server (bonus)
+- **Redis cache (bonus):** ускорение read-запросов к MCP (list/statistics/get) + TTL + инвалидация после add
 - 3 Bonus - Observability: request_id + логирование tool calls + duration
 
 ---
@@ -19,6 +20,7 @@ FastAPI → LangGraph Agent → (Custom tools + MCP tools via stdio subprocess)
 - **LangGraph**: определяет intent (через MockLLM), вызывает MCP tools, форматирует ответ
 - **MCP servers**: запускаются как subprocess через stdio (FastMCP)
 - **SQLite**: хранит products и orders, сохраняется через volume в Docker
+- **Redis**: кеширует результаты MCP read tools (ускоряет повторные запросы), логирует cache_hit, TTL управляется через env
 
 ---
 
@@ -47,7 +49,7 @@ FastAPI → LangGraph Agent → (Custom tools + MCP tools via stdio subprocess)
 ## Запуск локально (Windows PowerShell) 🔥
 
 ### 1) Установить зависимости
-``` powershell
+```powershell
 cd ai-mcp-agentt
 py -3.11 -m venv .venv
 .\.venv\Scripts\activate
@@ -55,18 +57,19 @@ py -m pip install --upgrade pip
 py -m pip install -r requirements.txt
 ```
 
+> Redis локально не обязателен. Если `REDIS_URL` не задан — кеш просто не используется (fail-open).
+
 ### 2) Запуск API
-``` powershell
+```powershell
 py -m uvicorn ai_mcp_agent.app.main:app --reload --app-dir src
 ```
 
 Открыть:
-http://127.0.0.1:8000/docs
-http://127.0.0.1:8000/health
-
+- http://127.0.0.1:8000/docs
+- http://127.0.0.1:8000/health
 
 ### 3) Пример запроса (PowerShell)
-```
+```powershell
 $body = @{ query = "Show me all products in category Electronics" } | ConvertTo-Json
 Invoke-RestMethod -Method Post `
   -Uri "http://127.0.0.1:8000/api/v1/agent/query" `
@@ -74,17 +77,21 @@ Invoke-RestMethod -Method Post `
   -Body $body | ConvertTo-Json -Depth 10
 ```
 
-Запуск через Docker Compose:
-### 1) Поднять сервис
-```
+---
+
+## Запуск через Docker Compose 🐳
+
+### 1) Поднять сервисы (API + Redis)
+```powershell
 docker compose up --build
 ```
 
 ### 2) Проверка
-http://127.0.0.1:8000/docs
+Открыть:
+- http://127.0.0.1:8000/docs
 
 Или PowerShell:
-```
+```powershell
 $body = @{ query = "Show me all products in category Electronics" } | ConvertTo-Json
 Invoke-RestMethod -Method Post `
   -Uri "http://127.0.0.1:8000/api/v1/agent/query" `
@@ -92,70 +99,79 @@ Invoke-RestMethod -Method Post `
   -Body $body | ConvertTo-Json -Depth 10
 ```
 
-### 3) Персистентность SQLite
+### 3) Персистентность SQLite в Docker
+SQLite база хранится в `./data/products.db` (volume `./data:/app/data`).
+После `docker compose down` данные сохраняются.
 
-SQLite база хранится в ./data/products.db (volume ./data:/app/data).
-После docker compose down данные сохраняются.
+### 4) Redis cache в Docker
+Redis поднимается отдельным сервисом (`redis`) и используется API через переменную:
+- `REDIS_URL=redis://redis:6379/0`
 
-### Тесты
-```
+По умолчанию кеш включен **только если** `REDIS_URL` задан.
+
+TTL кеша можно менять:
+- `CACHE_TTL_SECONDS` (по умолчанию 60)
+
+Инвалидация:
+- после `add_product` очищаются ключи `products:list:*` и `products:stats`.
+
+---
+
+## Тесты ✅
+```powershell
 .\.venv\Scripts\activate
 pytest -q
 ```
 
 ---
 
-### DEMO
+## DEMO 🧪
 
 ### 1) Tests
-![Tests](/docs/screenshots/Tests.jpg)
+![Tests](docs/screenshots/Tests.jpg)
 
 ### 2) List by category (EN)
-![List by category EN](/docs/screenshots/List_By_Category.jpg)
+![List by category EN](docs/screenshots/List_By_Category.jpg)
 
 ### 3) Add product (EN)
-![Add product EN](/docs/screenshots/Add_Product.jpg)
+![Add product EN](docs/screenshots/Add_Product.jpg)
 
 ### 4) Discount (RU)
-![Discount RU](/docs/screenshots/Discount.jpg)
+![Discount RU](docs/screenshots/Discount.jpg)
 
 ### 5) Create order (EN)
-![Create order EN](/docs/screenshots/Create_Order.jpg)
+![Create order EN](docs/screenshots/Create_Order.jpg)
 
 ### 6) Logs (Bonus A: request_id + tool_call + agent_done)
-![Observability logs](/docs/screenshots/Logs.jpg)
+![Observability logs](docs/screenshots/Logs.jpg)
 
 ### 7) Local persistence (optional)
-![Local persistence](/docs/screenshots/Local_persist1.jpg)
-![Local persistence](/docs/screenshots/Local_persist2.jpg)
+![Local persistence](docs/screenshots/Local_persist1.jpg)
+![Local persistence](docs/screenshots/Local_persist2.jpg)
 
 ### 8) Docker persistence
-![Docker persistence](/docs/screenshots/Docker_1.jpg)
-![Docker persistence](/docs/screenshots/Docker_2.jpg)
-![Docker persistence](/docs/screenshots/Docker_3.jpg)
+![Docker persistence](docs/screenshots/Docker_1.jpg)
+![Docker persistence](docs/screenshots/Docker_2.jpg)
+![Docker persistence](docs/screenshots/Docker_3.jpg)
 
 ---
 
-### Структура проекта (коротко)
+## Структура проекта (коротко)
 
-src/ai_mcp_agent/app/ — FastAPI приложение
+- `src/ai_mcp_agent/app/` — FastAPI приложение
+- `src/ai_mcp_agent/agent/` — LangGraph агент + mock LLM + custom LLM/tools
+- `mcp_servers/` — MCP servers (products/orders) + SQLite stores
+- `scripts/` — локальные smoke-скрипты
+- `tests/` — unit + integration тесты
 
-src/ai_mcp_agent/agent/ — LangGraph агент + mock LLM + custom tools
+---
 
-mcp_servers/ — MCP servers (products/orders) + SQLite stores
+## Observability (3 Bonus) 📈
 
-scripts/ — локальные smoke-скрипты
+`request_id` генерируется middleware и возвращается в `X-Request-ID` header.
 
-tests/ — unit + integration тесты
-
-### Observability (3 Bonus)
-
-request_id генерируется middleware и возвращается в X-Request-ID header
-
-логируются:
-
-    request start/end + duration
-
-    agent_done (intent + duration)
-
-    tool_call для MCP tools (какой tool, параметры, duration)
+Логируются:
+- request start/end + duration
+- agent_done (intent + duration)
+- tool_call для MCP tools (какой tool, параметры, duration)
+- **Redis cache_hit** для read-запросов к MCP (cache_hit=true/false)

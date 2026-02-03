@@ -108,31 +108,31 @@ pytest -q
 ### DEMO
 
 ### 1) Tests
-![Tests](screenshots/Tests.png)
+![Tests](/docs/screenshots/Tests.png)
 
 ### 2) List by category (EN)
-![List by category EN](screenshots/List_By_Category.png)
+![List by category EN](/docs/screenshots/List_By_Category.png)
 
 ### 3) Add product (EN)
-![Add product EN](screenshots/Add_Product.png)
+![Add product EN](/docs/screenshots/Add_Product.png)
 
 ### 4) Discount (RU)
-![Discount RU](screenshots/Discount.png)
+![Discount RU](/docs/screenshots/Discount.png)
 
 ### 5) Create order (EN)
-![Create order EN](screenshots/Create_Order.png)
+![Create order EN](/docs/screenshots/Create_Order.png)
 
 ### 6) Logs (Bonus A: request_id + tool_call + agent_done)
-![Observability logs](screenshots/Logs.png)
+![Observability logs](/docs/screenshots/Logs.png)
 
 ### 7) Local persistence (optional)
-![Local persistence](screenshots/Local_persist1.png)
-![Local persistence](screenshots/Local_persist2.png)
+![Local persistence](/docs/screenshots/Local_persist1.png)
+![Local persistence](/docs/screenshots/Local_persist2.png)
 
 ### 8) Docker persistence
 ![Docker persistence](/docs/screenshots/Docker_1.jpg)
-![Docker persistence](screenshots/Docker_2.png)
-![Docker persistence](screenshots/Docker_3.png)
+![Docker persistence](/docs/screenshots/Docker_2.png)
+![Docker persistence](/docs/screenshots/Docker_3.png)
 
 ---
 
